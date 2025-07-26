@@ -9,3 +9,22 @@ images/
 
 # Notebooks are right now only for personal experimentation
 notebooks/
+
+# PyTorch
+*.pt
+*.pth
+
+# Checkpoints and logs
+checkpoints/
+logs/
+*.log
+
+# Data
+data/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Python
+__pycache__/
+*.pyc
