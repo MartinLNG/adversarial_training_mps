@@ -1,0 +1,22 @@
+name: TNML
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch=2.0
+  - torchvision
+  - torchaudio
+  - cpuonly  # remove this if you want GPU versions later
+  - matplotlib
+  - jupyter
+  - ipykernel
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - tqdm
+  - pip
+  - pip:
+      - tensorkrowch
+      - opt_einsum==3.2 # This is a requirement for TensorKrowch

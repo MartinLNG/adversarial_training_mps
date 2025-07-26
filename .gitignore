@@ -1,0 +1,11 @@
+# Old environment not needed for repo
+environment_old.*
+
+# I don't know I want to keep it
+spec_file.txt
+
+# Save images only locally. 
+images/
+
+# Notebooks are right now only for personal experimentation
+notebooks/
