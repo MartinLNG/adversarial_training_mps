@@ -1,15 +1,9 @@
 """
-Pretraining script. Could be used to seperate the experiment into two: Pretraining and adversarial training. Also good for debugging, I guess.
-
-1. Dataset loaded (labelled dataset, e.g. 2 moons)
+Pretraining for MPS only script. Mainly for debugging as pretrained MPS is not of interest per se.
+1. Raw dataset generated or loaded.
 2. MPS initialized
 3. Dateset preprocessed (depends on embedding used)
 4. MPS trained as classifier
-5. Discriminator initialized
-6. MPS generates data for discriminator
-7. Discrimination pretraining dataset preloaded (real and synthesised samples)
-8. Discriminator pretrained (binary classification problem)
-
 Log pretraining such that visualisation is possible after the training.
 """
 
