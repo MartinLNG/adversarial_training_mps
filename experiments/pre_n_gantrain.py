@@ -1,24 +1,9 @@
-"""
-Pretraining script. Could be used to seperate the experiment into two: Pretraining and adversarial training. Also good for debugging, I guess.
-
-1. Dataset loaded (labelled dataset, e.g. 2 moons)
-2. MPS initialized
-3. Dateset preprocessed (depends on embedding used)
-4. MPS trained as classifier
-5. Discriminator initialized
-6. MPS generates data for discriminator
-7. Discrimination pretraining dataset preloaded (real and synthesised samples)
-8. Discriminator pretrained (binary classification problem)
-
-Log pretraining such that visualisation is possible after the training.
-"""
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__),
                 "..", "src"))  # make src importable
 
 from collections import defaultdict
-import numpy as np
 import logging
 from omegaconf import OmegaConf
 import torch
@@ -124,6 +109,22 @@ def main(cfg: Config):
                                                   loaders=d_loaders[i])
         logger.info(f"Pretraining of discriminator {i} completed.")
     logger.info("Pretraining completed.")
+
+    # 9. DataLoader for GAN-style training
+    real_loaders = {}
+    for split in ["train", "valid", "test"]:
+        real_loaders[split] = gantrain.real_loader(X=X[split], c=t[split], 
+                                                   n_real=cfg.gantrain.n_real, split=split)
+    # 10. GAN-style training
+    logger.info("GAN-style training begins.")
+    best_acc = mps_pretrain_results["best accuracy"]
+    (d_losses, g_losses, 
+     valid_acc, valid_loss) = gantrain.loop(mps=mps, dis=d, real_loaders=real_loaders, 
+                                            cfg=cfg.gantrain, cls_pos=cls_pos, 
+                                            embedding=cfg.model.mps.embedding, 
+                                            best_acc=best_acc, cat_loaders=loaders,
+                                            device=device)
+    logger.info("GAN-style training completed.")
 
 if __name__ == "__main__":
     main()
