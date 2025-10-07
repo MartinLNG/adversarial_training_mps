@@ -226,7 +226,7 @@ def visualise_samples(samples: torch.FloatTensor, labels: Optional[torch.LongTen
         return create_2d_scatter(X=samples, t=labels)
     else:
         if gen_viz is None:
-            gen_viz = samples.shape[0]
+            gen_viz = samples.shape[0] # Can be used to visualise only a limited amount of examples
         raise ValueError("Higher data dimension not yet implemented.")
  
     
@@ -308,11 +308,11 @@ def set_seed(seed: int):
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#---------------Random Seed -----------------------------------------------------------------------------------------------------------------------------------------------------
+#---------------Metrics for generative capabilities -----------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# --- differentiable Matrix square root operator, 
+# --- Matrix square root implementation for pytorch, 
 # from https://github.com/steveli/pytorch-sqrtm/blob/master/sqrtm.py ---
 
 class MatrixSquareRoot(Function):
@@ -337,20 +337,22 @@ class MatrixSquareRoot(Function):
 
 sqrtm = MatrixSquareRoot.apply
 
+def mean_n_cov(data: torch.FloatTensor):
+    """
+    data: shape (N, d)
+    """
+    mu = data.mean(dim=0)
+    cov = torch.cov(data.T)
+    return mu, cov
 
-# --- differentiable FID-like metric ---
+# --- FID-like metric ---
 class FIDLike(nn.Module):
     def __init__(self, eps: float = 1e-6):
         super().__init__()
         self.eps = eps
 
-    def forward(self, real, generated):
-        mu_r = real.mean(dim=0)
-        mu_g = generated.mean(dim=0)
-
-        # Covariances: remember to transpose (samples -> columns)
-        cov_r = torch.cov(real.T)
-        cov_g = torch.cov(generated.T)
+    def lazy_forward(self, mu_r, cov_r, generated):
+        mu_g, cov_g = mean_n_cov(generated)
 
         # Regularize for numerical stability
         eye = torch.eye(cov_r.shape[0], device=cov_r.device)
@@ -370,6 +372,11 @@ class FIDLike(nn.Module):
         diff_cov = torch.trace(cov_r + cov_g - 2 * covmean)
 
         return diff_mu + diff_cov
+    
+    def forward(self, real, generated):
+        mu_r, cov_r = mean_n_cov(real)
+        return self.lazy_forward(mu_r, cov_r, generated)
+        
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------

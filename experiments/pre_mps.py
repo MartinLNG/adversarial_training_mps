@@ -12,7 +12,7 @@ import torch
 import tensorkrowch as tk
 import hydra
 import matplotlib.pyplot as plt
-from src._utils import init_wandb, _class_wise_dataset_size, visualise_samples, save_model, verify_tensors, set_seed
+from src._utils import init_wandb, mean_n_cov, _class_wise_dataset_size, visualise_samples, save_model, verify_tensors, set_seed
 import src.schemas as schemas
 from src.datasets.gen_n_load import load_dataset, LabelledDataset
 from src.datasets.preprocess import preprocess_pipeline
@@ -37,9 +37,9 @@ def main(cfg: schemas.Config):
 
     # Loading dataset for classification
     dataset: LabelledDataset = load_dataset(cfg=cfg.dataset)
-    dataset_name = dataset.name
     data_dim = dataset.num_feat
     num_cls = dataset.num_cls
+    logger.info(f"Using the '{dataset.name}' dataset.")
 
     # Initialising MPS
     init_cfg = OmegaConf.to_object(cfg.model.mps.init_kwargs)
@@ -59,6 +59,12 @@ def main(cfg: schemas.Config):
                                        split=cfg.dataset.split,
                                        random_state=cfg.reproduce.random.random_state,
                                        embedding=classifier.embedding)
+
+    # Dataset statistics. TODO: Implement something more general and configable
+    if data_dim < 1e3: # native computation of covariance matrix very expensive
+        stat_r = {}
+        for c in range(num_cls):
+            stat_r[c] = mean_n_cov(X["train"][t["train"]==c])
 
     # Visualising the data
     ax = visualise_samples(samples=X["train"], labels=t["train"], gen_viz=cfg.sampling.num_spc)
@@ -81,9 +87,9 @@ def main(cfg: schemas.Config):
     # Pretraining the MPS as classifier
     (mps_pretrain_tensors,
      mps_pretrain_best_acc) = mps_cat.train(classifier=classifier, loaders=loaders,
-                                            cfg=cfg.pretrain.mps,
+                                            cfg=cfg.pretrain.mps, stat_r=stat_r,
                                             device=device, samp_cfg=cfg.sampling,
-                                            title=dataset_name, stage="pre")
+                                            stage="pre")
 
     logger.info("MPS pretraining done.")
     logger.info(f"{mps_pretrain_best_acc=}")
