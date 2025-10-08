@@ -254,11 +254,15 @@ def check_and_retrain(generator: tk.models.MPS,
     if loaders["train"].dataset.dim < 1e3 or toViz:
         synths = sample_from_classifier(classifier=classifier, device=device, 
                                         cfg=samp_cfg)
-        if loaders["train"].dataset.dim < 1e3:
-            mu_r, cov_r = stat_r
-            for c in range(synths.shape[1]):
+        # TODO: Implement something more general and configable
+        if loaders["train"].dataset.dim < 1e3: # fid_like metric too expensive higher dim data, in the current implementation
+            fid_values = []
+            for c in stat_r.keys():
+                mu_r, cov_r = stat_r[c]
                 gen = synths[:, c, :]
-                log[f"gan_mps/fid/{c}"] = fid_like.lazy_forward(mu_r[c], cov_r[c], gen)
+                fid_val = fid_like.lazy_forward(mu_r, cov_r, gen)
+                fid_values.append(fid_val)
+            log[f"gan_mps/fid"] = torch.mean(torch.stack(fid_values)).item()
         if toViz:
             ax = visualise_samples(synths, gen_viz=samp_cfg.batch_spc)
             log[f"samples/gan"] = wandb.Image(ax.figure)
@@ -286,11 +290,14 @@ def check_and_retrain(generator: tk.models.MPS,
         if loaders["train"].dataset.dim < 1e3 or toViz:
             synths = sample_from_classifier(classifier=classifier, device=device, 
                                             cfg=samp_cfg)
-            if loaders["train"].dataset.dim < 1e3:
-                mu_r, cov_r = stat_r
-                for c in range(synths.shape[1]):
+            if loaders["train"].dataset.dim < 1e3: # fid_like metric too expensive higher dim data, in the current implementation
+                fid_values = []
+                for c in stat_r.keys():
+                    mu_r, cov_r = stat_r[c]
                     gen = synths[:, c, :]
-                    log[f"gan_mps/fid/{c}"] = fid_like.lazy_forward(mu_r[c], cov_r[c], gen)
+                    fid_val = fid_like.lazy_forward(mu_r, cov_r, gen)
+                    fid_values.append(fid_val)
+                log[f"gan_mps/fid"] = torch.mean(torch.stack(fid_values)).item()
             if toViz:
                 ax = visualise_samples(synths, gen_viz=samp_cfg.batch_spc)
                 log[f"samples/gan"] = wandb.Image(ax.figure)

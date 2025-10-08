@@ -353,7 +353,7 @@ class FIDLike(nn.Module):
 
     def lazy_forward(self, mu_r, cov_r, generated):
         mu_g, cov_g = mean_n_cov(generated)
-
+        
         # Regularize for numerical stability
         eye = torch.eye(cov_r.shape[0], device=cov_r.device)
         cov_r = cov_r + self.eps * eye
@@ -377,6 +377,28 @@ class FIDLike(nn.Module):
         mu_r, cov_r = mean_n_cov(real)
         return self.lazy_forward(mu_r, cov_r, generated)
         
+
+def sample_quality_control(synths: torch.FloatTensor, 
+                           upper: float, lower: float):
+    
+    bad_idx = (
+        (synths.abs() > upper) | (synths < lower)
+        ).nonzero(as_tuple=False)  # (sample_idx, class_idx, feat_idx)
+    logger.info(f"bad positions count = {bad_idx.shape[0]}")
+    if bad_idx.shape[0] > 0:
+        # show first few offending indices and their values
+        for i in range(min(200, bad_idx.shape[0])):
+            s,c,f = bad_idx[i].tolist()
+            val = synths[s, c, f].item()
+            logger.info(f"BAD value at sample={s}, class={c}, feat={f}: {val}")
+        # show global per-dim & per-class stats
+        logger.info("per-class-per-dim max abs:")
+        for c in range(synths.shape[1]):
+            for f in range(synths.shape[2]):
+                m = synths[:, c, f].abs().max().item()
+                logger.info(f" class={c}, feat={f}, max_abs={m:.4g}, mean={synths[:,c,f].mean().item():.4g}")
+    else:
+        logger.info("No values above threshold found.")
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------

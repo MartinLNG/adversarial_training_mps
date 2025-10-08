@@ -177,8 +177,8 @@ fid_like = FIDLike()
 _METRICS = ["loss", "acc", "fid"]
 
 def _performance_check(crit: str, 
-                   current: Dict[float],
-                   best: Dict[float]):
+                   current: Dict[str, float],
+                   best: Dict[str, float]):
     isBetter = False
     isBetter = (
         ((crit=="acc") and (current[crit]>best[crit])) or
@@ -190,8 +190,8 @@ def _performance_check(crit: str,
     return isBetter
 
 def _update(crit: str, 
-            current: Dict[float], 
-            best: Dict[float],
+            current: Dict[str, float], 
+            best: Dict[str, float],
             patience_counter: int):
     
     # Condition check
@@ -279,7 +279,9 @@ def train(classifier: tk.models.MPSLayer,
     
     # TODO: Implement something more general and configable
     if loaders["train"].dataset.dim < 1e3: # fid_like metric too expensive higher dim data, in the current implementation
-        mu_r, cov_r = stat_r
+        mu_r, cov_r = {}, {}
+        for c in stat_r.keys():
+            mu_r[c], cov_r[c] = stat_r[c]
 
     patience_counter = 0
     best_tensors = []  # Container for best model parameters
@@ -299,21 +301,24 @@ def train(classifier: tk.models.MPSLayer,
     for epoch in range(cfg.max_epoch):
         # Training step
         step = _train_step(
-            classifier=classifier, loader=loaders['train'], device=device,
+            classifier=classifier, loader=loaders["train"], device=device,
             optimizer=optimizer, loss_fn=criterion, stage=stage,
             watch_freq=cfg.watch_freq, step=step)
 
         # Performance evaluation
         current = {}
         current["acc"], current["loss"] = eval(classifier, 
-                                               loaders['valid'], 
+                                               loaders["valid"], 
                                                criterion, device)
-        if crit == "fid":
+        if cfg.stop_crit == "fid":
+            fid_values = []
             synths = sample_from_classifier(classifier=classifier, 
                                             cfg=samp_cfg, device=device)
             for c in range(synths.shape[1]):
                 gen = synths[:, c, :]
-                current[f"fid/{c}"] = fid_like.lazy_forward(mu_r[c], cov_r[c], gen)
+                fid_val = fid_like.lazy_forward(mu_r[c], cov_r[c], gen)
+                fid_values.append(fid_val)
+            current["fid"] = torch.mean(torch.stack(fid_values)).item()
         else:
             current["fid"] = None
 
@@ -338,7 +343,7 @@ def train(classifier: tk.models.MPSLayer,
         # Log performance
         performance_log = {}
         for crit in _METRICS:
-            performance_log[f"{stage}_mps/valid/{crit}": current[crit]]
+            performance_log[f"{stage}_mps/valid/{crit}"] = current[crit]
         wandb.log(performance_log)
 
         # Update
