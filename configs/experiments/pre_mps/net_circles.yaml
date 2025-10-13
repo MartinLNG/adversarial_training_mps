@@ -1,8 +1,8 @@
 # @package _global_
-experiment: net
+experiment: net_circles
 
 defaults:
-  - override /dataset: moons_4k
+  - override /dataset: circles_4k
   - override /model/mps: d30D18_secant # using only the most powerful
   - override /pretrain/mps: adam_b64e500
   - override /sampling: l500num2000
@@ -12,7 +12,7 @@ defaults:
 hydra:
   sweeper:
     params:
-      pretrain.mps.optimizer.kwargs.lr: 1e-4, 1e-3, 1e-2
-      pretrain.mps.optimizer.kwargs.weight_decay: 1e-4, 1e-3, 0.0
-      pretrain.mps.stop_crit: loss, acc, fid
-      pretrain.mps.patience: 10, 100
+      pretrain.mps.optimizer.kwargs.lr: 1e-3, 5e-3, 5e-2
+      pretrain.mps.optimizer.kwargs.weight_decay: 0.0, 1e-3, 5e-3
+      pretrain.mps.stop_crit: loss, fid
+      pretrain.mps.patience: 250
