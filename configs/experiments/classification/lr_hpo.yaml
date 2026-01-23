@@ -1,5 +1,6 @@
 # @package _global_
-experiment: lrwdbs_hpo
+# HPO for learning rate only, with no weight decay
+experiment: lr_hpo
 
 defaults:
   - override /born: d30D18
@@ -8,16 +9,18 @@ defaults:
   - override /trainer/ganstyle: null
   - override /trainer/adversarial: null
   - override /tracking: online
-  - override /hydra/sweeper: optuna  # Enable Optuna
+  - override /hydra/sweeper: optuna
 
 trainer:
   classification:
     save: True
-  
+    optimizer:
+      kwargs:
+        weight_decay: 0.0
 
 hydra:
   sweeper:
-    storage: "sqlite:///outputs/${experiment}_study.db"
+    storage: "sqlite:////home/ubuntu/adversarial_training_mps/outputs/${experiment}_study.db"
     study_name: "${experiment}"
 
     sampler:
@@ -25,12 +28,11 @@ hydra:
       seed: 42
       n_startup_trials: 10
 
-    direction: minimize  # or maximize
+    direction: minimize
     n_trials: 40
     n_jobs: 1
 
     params:
       trainer.classification.optimizer.kwargs.lr: tag(log, interval(1e-4, 5e-2))
-      trainer.classification.optimizer.kwargs.weight_decay: tag(log, interval(1e-9, 1e-3))
       tracking.seed: range(1,100)
       tracking.random_state: range(1,100)
