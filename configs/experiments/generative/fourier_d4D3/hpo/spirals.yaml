@@ -1,9 +1,15 @@
 # @package _global_
+# Generative NLL HPO for small model (d4D3) on spirals
+#
+# Usage:
+#   python -m experiments.generative --multirun +experiments=generative/fourier_d4D3/hpo/spirals
 experiment: size_hpo
 
 defaults:
   - override /born: d4D3
   - override /dataset: 2Dtoy/spirals_4k
+  - override /trainer/classification: null
+  - override /trainer/generative: test
   - override /trainer/ganstyle: null
   - override /trainer/adversarial: null
   - override /tracking: online
@@ -18,11 +24,11 @@ dataset:
     seed: 25
 
 trainer:
-  classification:
+  generative:
     max_epoch: 300
     batch_size: 256
     patience: 300
-    stop_crit: "clsloss"
+    stop_crit: "genloss"
     watch_freq: 10000
     save: false
     optimizer:
@@ -31,10 +37,10 @@ trainer:
         lr: 1e-4
         weight_decay: 0.0
     criterion:
-      name: "negative log-likelihood"
+      name: "nll"
       kwargs:
         eps: 1e-8
-    metrics: {"clsloss": 1, "acc": null, "rob": null}
+    metrics: {"genloss": 1}
 
 hydra:
   sweeper:
@@ -47,5 +53,5 @@ hydra:
     n_trials: 30
     n_jobs: 1
     params:
-      trainer.classification.optimizer.kwargs.lr: tag(log, interval(1e-4, 5e-2))
-      trainer.classification.optimizer.kwargs.weight_decay: tag(log, interval(1e-9, 1e-3))
+      trainer.generative.optimizer.kwargs.lr: tag(log, interval(1e-4, 5e-2))
+      trainer.generative.optimizer.kwargs.weight_decay: tag(log, interval(1e-9, 1e-1))
