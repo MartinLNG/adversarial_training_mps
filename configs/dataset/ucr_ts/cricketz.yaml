@@ -1,6 +1,6 @@
-name: "italypowerdemand"
+name: "cricketz"
 gen_dow_kwargs:
-  name: "italypowerdemand"
+  name: "cricketz"
   size: null
   seed: 42
   noise: null

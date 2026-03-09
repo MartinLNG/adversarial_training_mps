@@ -1,6 +1,6 @@
-name: "italypowerdemand"
+name: "chlorineconcentration"
 gen_dow_kwargs:
-  name: "italypowerdemand"
+  name: "chlorineconcentration"
   size: null
   seed: 42
   noise: null

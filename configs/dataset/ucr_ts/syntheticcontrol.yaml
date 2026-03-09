@@ -1,6 +1,6 @@
-name: "italypowerdemand"
+name: "syntheticcontrol"
 gen_dow_kwargs:
-  name: "italypowerdemand"
+  name: "syntheticcontrol"
   size: null
   seed: 42
   noise: null
