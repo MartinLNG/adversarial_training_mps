@@ -1,5 +1,5 @@
 # @package _global_
-experiment: softmax_sanity_legendre
+experiment: softmax_sweep
 
 defaults:
   - override /born: legendre/d3D10
@@ -9,12 +9,10 @@ defaults:
   - override /trainer/adversarial: null
   - override /tracking: online
 
-tracking:
-  seed: 13
-  mode: offline
-
-trainer:
-  classification:
-    optimizer:
-      kwargs:
-        lr: 5e-5
+hydra:
+  sweeper:
+    params:
+      born: legendre/d3D10, fourier/d3D10
+      born.init_kwargs.init_method: randn, unit, canonical
+      tracking.seed: 1, 2
+      trainer.classification.optimizer.kwargs.lr: 1e-4, 1e-5
