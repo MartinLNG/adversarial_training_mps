@@ -25,6 +25,8 @@ python -m experiments.generative --multirun \
   tracking.mode=disabled
 ```
 
+**Status: ✓ verified 2026-04-13** — all 64 jobs passed, genloss/acc/clsloss logged correctly.
+
 ## Time-series — legendre/d3D10c64
 
 ```bash
@@ -52,6 +54,9 @@ python -m experiments.generative --multirun \
   trainer.generative.max_epoch=2 trainer.generative.patience=5 \
   tracking.mode=disabled
 ```
+
+**Status: ecg200, italypowerdemand ✓ verified 2026-04-13** — all 64 jobs passed.
+**Pending: syntheticcontrol, chlorineconcentration** — npz files not yet available on hivenet; scp from local when ready.
 
 ## What to check
 
