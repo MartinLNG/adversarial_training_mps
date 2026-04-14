@@ -3,8 +3,8 @@ experiment: alpha_curve
 descriptor: mixed_scratch
 
 defaults:
-  - override /born: legendre/d10D6
-  - override /dataset: 2Dtoy/moons_4k
+  - override /born: legendre/d3D10c64
+  - override /dataset: ucr_ts/ecg200
   - override /trainer/classification: null
   - override /trainer/generative: test
   - override /trainer/ganstyle: null
@@ -14,15 +14,10 @@ defaults:
 tracking:
   seed: 42
 
-dataset:
-  split_seed: 11
-  gen_dow_kwargs:
-    seed: 25
-
 trainer:
   generative:
-    max_epoch: 300
-    batch_size: 256
+    max_epoch: 1000
+    batch_size: 128
     patience: 300
     stop_crit: "genloss"
     watch_freq: 0
@@ -34,7 +29,7 @@ trainer:
     optimizer:
       name: "adam"
       kwargs:
-        lr: 0.01   # best single lr across all alphas (grid sweep avg)
+        lr: 0.001  # best single lr across all alphas (grid sweep avg)
         weight_decay: 0.0
     criterion:
       name: "mixed_nll"
@@ -43,7 +38,7 @@ trainer:
 
 hydra:
   sweep:
-    dir: outputs/alpha_curve/gen/legendre/d10D6/moons_4k_${now:%d%m}
+    dir: outputs/alpha_curve/gen/legendre/d3D10c64/ecg200_${now:%d%m}
     subdir: ${hydra.job.num}
   sweeper:
     params:
